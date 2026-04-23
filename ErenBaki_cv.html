@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>EREN BAKİ — Interactive CV</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+:root {
+  --black:  #000000;
+  --dark:   #0a0a0a;
+  --green:  #00ff41;
+  --dim:    #00aa2a;
+  --white:  #ffffff;
+  --gray:   #444444;
+  --lgray:  #888888;
+  --panel:  rgba(0,0,0,0.92);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--black);
+  font-family: 'Press Start 2P', monospace;
+  overflow: hidden;
+  width: 100vw;
+  height: 100vh;
+  color: var(--white);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* scanlines */
+body::after {
+  content:'';
+  position:fixed; inset:0;
+  background: repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,255,65,0.012) 3px,rgba(0,255,65,0.012) 4px);
+  pointer-events:none;
+  z-index:9999;
+}
+
+/* ===== TITLE SCREEN ===== */
+#title {
+  position:fixed; inset:0;
+  background:#000;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:24px;
+  z-index:8000;
+  transition: opacity 0.5s;
+}
+#title.out { opacity:0; pointer-events:none; }
+
+/* EB LOGO — Mario question box style */
+#eb-logo {
+  position:relative;
+  width:100px; height:100px;
+}
+.logo-box {
+  width:100px; height:100px;
+  background: #c8a000;
+  border: 4px solid #000;
+  box-shadow:
+    inset 4px 4px 0 #ffd700,
+    inset -4px -4px 0 #8b6800,
+    0 0 0 2px #000;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  animation: logoGlow 1.5s ease-in-out infinite alternate;
+  position:relative;
+  image-rendering:pixelated;
+}
+@keyframes logoGlow {
+  from {
+    box-shadow: inset 4px 4px 0 #ffd700, inset -4px -4px 0 #8b6800, 0 0 0 2px #000, 0 0 20px rgba(255,200,0,0.4);
+  }
+  to {
+    box-shadow: inset 4px 4px 0 #ffe84d, inset -4px -4px 0 #a07800, 0 0 0 2px #000, 0 0 40px rgba(255,200,0,0.8), 0 0 80px rgba(255,200,0,0.3);
+  }
+}
+.logo-box::before {
+  content:'?';
+  display:none; /* hidden, showing EB instead */
+}
+.logo-eb {
+  font-size:28px;
+  color:#000;
+  letter-spacing:2px;
+  text-shadow: 2px 2px 0 rgba(255,255,255,0.3);
+  font-weight:900;
+}
+/* coin pop animation on click */
+@keyframes coinPop {
+  0%   { transform:translateY(0) scale(1); opacity:1; }
+  50%  { transform:translateY(-60px) scale(1.2); opacity:1; }
+  100% { transform:translateY(-80px) scale(0.8); opacity:0; }
+}
+.coin-pop {
+  position:absolute;
+  top:0; left:50%;
+  transform:translateX(-50%);
+  width:20px; height:20px;
+  background:#ffd700;
+  border:2px solid #000;
+  border-radius:50%;
+  animation: coinPop 0.5s ease-out forwards;
+  pointer-events:none;
+}
+/* box bump */
+@keyframes boxBump {
+  0%,100% { transform:translateY(0); }
+  40%     { transform:translateY(-8px); }
+}
+.logo-box.bump { animation: boxBump 0.3s ease-out, logoGlow 1.5s ease-in-out infinite alternate; }
+
+.title-name {
+  font-size: clamp(18px, 6vw, 36px);
+  color: var(--green);
+  letter-spacing: 4px;
+  text-shadow: 0 0 15px var(--green), 0 0 30px rgba(0,255,65,0.4);
+  text-align:center;
+}
+.title-role {
+  font-size: 8px;
+  color: var(--lgray);
+  letter-spacing: 2px;
+  text-align:center;
+}
+.title-start {
+  font-size: 9px;
+  color: var(--green);
+  animation: blink 1s step-end infinite;
+  margin-top: 10px;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+.title-hint { font-size:6px; color:#333; }
+
+/* ===== GAME ===== */
+#game {
+  width:100vw; height:100vh;
+  position:relative;
+  overflow:hidden;
+  display:none;
+}
+#game.show { display:block; }
+
+/* ===== SKY — clean dark space ===== */
+#sky {
+  position:absolute; inset:0;
+  background: linear-gradient(180deg,
+    #000005 0%,
+    #020010 40%,
+    #040018 70%,
+    #060010 100%
+  );
+}
+.star {
+  position:absolute;
+  background:#fff;
+  image-rendering:pixelated;
+  animation: twinkle 3s ease-in-out infinite;
+}
+@keyframes twinkle { 0%,100%{opacity:.1} 50%{opacity:.8} }
+
+/* ===== CITY — 2 layers ===== */
+#city-back {
+  position:absolute;
+  bottom:80px;
+  left:0;
+  width:100%;
+  height:120px;
+  z-index:2;
+  overflow:hidden;
+}
+#city-front {
+  position:absolute;
+  bottom:80px;
+  left:0;
+  width:100%;
+  height:90px;
+  z-index:4;
+  overflow:hidden;
+}
+/* Ground */
+#ground {
+  position:absolute;
+  bottom:0; left:0;
+  width:100%;
+  height:80px;
+  background:#080808;
+  border-top: 3px solid #1a1a1a;
+  z-index:5;
+}
+/* subtle ground line glow */
+#ground::before {
+  content:'';
+  position:absolute;
+  top:0; left:0; right:0;
+  height:3px;
+  background: linear-gradient(90deg, transparent, var(--dim), transparent);
+  opacity:0.4;
+}
+
+/* ===== CV PANEL — top ===== */
+#cv-panel {
+  position:absolute;
+  top:0; left:0; right:0;
+  background: rgba(0,0,0,0.97);
+  border-bottom: 2px solid var(--green);
+  z-index:500;
+  max-height:58vh;
+  overflow-y:auto;
+  padding:18px 24px 18px;
+  transform: translateY(-100%);
+  transition: transform 0.4s cubic-bezier(.4,0,.2,1);
+}
+#cv-panel.visible { transform: translateY(0); }
+#cv-panel::-webkit-scrollbar { width:3px; }
+#cv-panel::-webkit-scrollbar-track { background:#000; }
+#cv-panel::-webkit-scrollbar-thumb { background:var(--dim); }
+
+.zone-header {
+  font-size:9px;
+  color:var(--green);
+  letter-spacing:3px;
+  margin-bottom:16px;
+  padding-bottom:12px;
+  border-bottom:1px solid #222;
+}
+
+/* CV content styles */
+.cv-section-title {
+  font-size:8px;
+  color:var(--white);
+  letter-spacing:1px;
+  margin-bottom:10px;
+}
+.cv-entry {
+  margin-bottom:16px;
+  padding-bottom:14px;
+  border-bottom:1px solid #181818;
+}
+.cv-entry:last-child { border-bottom:none; margin-bottom:0; }
+.cv-role  { font-size:8px; color:var(--white); margin-bottom:5px; letter-spacing:.5px; line-height:1.6; }
+.cv-place { font-size:7px; color:var(--lgray); margin-bottom:4px; }
+.cv-date  { font-size:7px; color:#555; margin-bottom:7px; }
+.cv-desc  { font-size:7px; color:#aaaaaa; line-height:2.1; }
+.cv-text  { font-size:7px; color:#aaaaaa; line-height:2.2; }
+.cv-item  { font-size:7px; color:#aaaaaa; line-height:2.3; padding-left:4px; }
+.cv-tag {
+  display:inline-block;
+  font-size:6px;
+  border:1px solid #222;
+  color:var(--lgray);
+  padding:4px 8px;
+  margin:3px 3px 0 0;
+  background:#0a0a0a;
+}
+
+/* stat bars */
+.sbar-row { display:flex; align-items:center; gap:10px; margin-bottom:9px; }
+.sbar-lbl { font-size:6px; color:#888; width:160px; flex-shrink:0; line-height:1.7; }
+.sbar { flex:1; height:9px; background:#111; border:1px solid #222; overflow:hidden; }
+.sbar-fill { height:100%; background:var(--dim); }
+
+/* ===== HUD ===== */
+#hud {
+  position:absolute;
+  bottom:88px; left:0; right:0;
+  z-index:300;
+  pointer-events:none;
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  padding:0 14px 6px;
+}
+.hud-l { display:flex; flex-direction:column; gap:4px; }
+.hud-name { font-size:9px; color:var(--green); text-shadow:0 0 8px var(--green); }
+.hud-class { font-size:6px; color:#444; }
+.hud-r { text-align:right; }
+.hud-zone { font-size:8px; color:var(--white); }
+.hud-zsub { font-size:6px; color:#444; margin-top:3px; }
+
+/* zone dots */
+#zdots {
+  position:absolute;
+  top:10px; left:50%; transform:translateX(-50%);
+  display:flex; gap:6px;
+  z-index:600;
+}
+.zd {
+  width:6px; height:6px;
+  border:1px solid #333;
+  background:#000;
+}
+.zd.done   { background:#1a3a1a; border-color:#1a3a1a; }
+.zd.active { background:var(--green); border-color:var(--green); box-shadow:0 0 4px var(--green); }
+
+/* ===== SCROLL INDICATORS ===== */
+#scroll-hint {
+  position:absolute;
+  right:10px;
+  top:50%;
+  transform:translateY(-50%);
+  display:none;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+  z-index:600;
+  pointer-events:none;
+}
+#scroll-hint.visible { display:flex; }
+.scroll-arrow {
+  font-size:10px;
+  color:var(--green);
+  opacity:0.7;
+  animation: arrowPulse 1.2s ease-in-out infinite;
+}
+.scroll-arrow.up   { animation-delay:0s; }
+.scroll-arrow.down { animation-delay:0.6s; }
+@keyframes arrowPulse { 0%,100%{opacity:0.2} 50%{opacity:1} }
+#player {
+  position:absolute;
+  bottom:80px;
+  z-index:100;
+  image-rendering:pixelated;
+}
+
+/* ===== CONTROLS ===== */
+#controls {
+  position:absolute;
+  bottom:10px; left:50%; transform:translateX(-50%);
+  display:flex; gap:12px; align-items:center;
+  z-index:700;
+}
+.btn {
+  background:#000;
+  border:2px solid #222;
+  color:var(--green);
+  font-family:'Press Start 2P',monospace;
+  font-size:8px;
+  padding:12px 22px;
+  cursor:pointer;
+  touch-action:manipulation;
+  transition:all .1s;
+  -webkit-tap-highlight-color:transparent;
+}
+.btn:active, .btn.on {
+  background:var(--green);
+  color:#000;
+  border-color:var(--green);
+}
+.btn-hint { font-size:5px; color:#222; }
+
+/* ===== FLASH / TRANSITION ===== */
+#flash {
+  position:fixed; inset:0;
+  background:#000;
+  opacity:0;
+  pointer-events:none;
+  z-index:7000;
+  transition:opacity .25s;
+}
+#flash.dark { opacity:1; }
+
+/* ===== THANK YOU SCREEN ===== */
+#thanks {
+  position:fixed; inset:0;
+  background:#000;
+  display:none;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:20px;
+  z-index:8000;
+}
+#thanks.show { display:flex; }
+/* EB logo small for thanks */
+.thanks-logo {
+  width:60px; height:60px;
+  background:#c8a000;
+  border:3px solid #000;
+  box-shadow: inset 3px 3px 0 #ffd700, inset -3px -3px 0 #8b6800, 0 0 30px rgba(255,200,0,0.6);
+  display:flex; align-items:center; justify-content:center;
+  animation: logoGlow 1.5s ease-in-out infinite alternate;
+}
+.thanks-logo span { font-size:16px; color:#000; font-weight:900; }
+.thanks-title { font-size:clamp(10px,3vw,16px); color:var(--green); letter-spacing:3px; text-align:center; }
+.thanks-sub   { font-size:7px; color:var(--lgray); letter-spacing:2px; text-align:center; line-height:2; }
+.thanks-contact { display:flex; flex-direction:column; gap:8px; align-items:center; }
+.thanks-contact a { font-size:6px; color:var(--lgray); text-decoration:none; }
+.thanks-contact a:hover { color:var(--green); }
+</style>
+</head>
+<body>
+
+<!-- FLASH -->
+<div id="flash"></div>
+
+<!-- TITLE SCREEN -->
+<div id="title">
+  <div id="eb-logo">
+    <div class="logo-box" id="logoBox">
+      <span class="logo-eb">EB</span>
+    </div>
+  </div>
+  <div class="title-name">EREN BAKİ</div>
+  <div class="title-role">MANAGEMENT INFORMATION SYSTEMS</div>
+  <div class="title-start">▶ TAP TO START</div>
+
+  <!-- Kontrol rehberi -->
+  <div style="display:flex;flex-direction:column;align-items:center;gap:14px;margin-top:10px">
+
+    <!-- Klavye -->
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="display:flex;gap:6px;align-items:center">
+        <div style="
+          width:32px;height:32px;
+          background:#111;
+          border:2px solid #333;
+          border-bottom:4px solid #333;
+          border-radius:4px;
+          display:flex;align-items:center;justify-content:center;
+          font-size:14px;color:#aaa;
+          box-shadow:0 2px 0 #000;
+        ">←</div>
+        <div style="
+          width:32px;height:32px;
+          background:#111;
+          border:2px solid #333;
+          border-bottom:4px solid #333;
+          border-radius:4px;
+          display:flex;align-items:center;justify-content:center;
+          font-size:14px;color:#aaa;
+          box-shadow:0 2px 0 #000;
+        ">→</div>
+      </div>
+      <span style="font-size:6px;color:#444;letter-spacing:1px">KEYBOARD</span>
+    </div>
+
+    <!-- Mobil -->
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="display:flex;gap:6px;align-items:center">
+        <div style="
+          padding:6px 12px;
+          background:#111;
+          border:2px solid #333;
+          border-bottom:4px solid #333;
+          border-radius:4px;
+          font-size:9px;color:#aaa;
+          font-family:'Press Start 2P',monospace;
+          box-shadow:0 2px 0 #000;
+        ">◀</div>
+        <div style="
+          padding:6px 12px;
+          background:#111;
+          border:2px solid #333;
+          border-bottom:4px solid #333;
+          border-radius:4px;
+          font-size:9px;color:#aaa;
+          font-family:'Press Start 2P',monospace;
+          box-shadow:0 2px 0 #000;
+        ">▶</div>
+      </div>
+      <span style="font-size:6px;color:#444;letter-spacing:1px">MOBILE</span>
+    </div>
+
+  </div>
+</div>
+
+<!-- THANK YOU SCREEN -->
+<div id="thanks">
+  <div class="thanks-logo"><span>EB</span></div>
+  <div class="thanks-title">THANK YOU FOR READING</div>
+  <div class="thanks-contact">
+    <span style="font-size:6px;color:#555">📞 05520941297</span>
+    <span style="font-size:6px;color:#555">✉️ ernbka.0@gmail.com</span>
+    <a href="https://linkedin.com/in/erennbaki" target="_blank">💼 www.linkedin.com/in/erennbaki</a>
+  </div>
+  <div style="font-size:7px;color:var(--green);animation:blink 1s step-end infinite;margin-top:10px">★ EREN BAKİ ★</div>
+  <button class="btn" id="btnRestart" style="margin-top:20px;font-size:8px;padding:14px 28px;" onclick="restartGame()">↩ BACK TO START</button>
+</div>
+
+<!-- GAME -->
+<div id="game">
+  <div id="sky"></div>
+  <canvas id="city-back-canvas"></canvas>
+  <canvas id="city-front-canvas"></canvas>
+  <div id="ground"></div>
+  <div id="player"></div>
+
+  <!-- HUD -->
+  <div id="zdots"></div>
+  <div id="hud">
+    <div class="hud-l">
+      <div class="hud-name">EREN BAKİ</div>
+      <div class="hud-class">Management Information Systems</div>
+    </div>
+    <div class="hud-r">
+      <div class="hud-zone" id="hzname">ZONE 1</div>
+      <div class="hud-zsub" id="hzsub">SUMMARY</div>
+    </div>
+  </div>
+
+  <!-- CV PANEL — top -->
+  <div id="cv-panel"></div>
+
+  <!-- SCROLL HINT -->
+  <div id="scroll-hint">
+    <div class="scroll-arrow up">▲</div>
+    <div style="font-size:5px;color:#444;letter-spacing:1px">SCROLL</div>
+    <div class="scroll-arrow down">▼</div>
+  </div>
+
+  <!-- CONTROLS -->
+  <div id="controls">
+    <button class="btn" id="btnL"
+      ontouchstart="nav(-1)" onmousedown="nav(-1)">◀ BACK</button>
+    <span class="btn-hint">← →</span>
+    <button class="btn" id="btnR"
+      ontouchstart="nav(1)" onmousedown="nav(1)">NEXT ▶</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// ZONES — exact text from CV
+// ============================================================
+const ZONES = [
+  {
+    name:'ZONE 1', sub:'SUMMARY',
+    render:()=>`
+      <div class="zone-header">▸ SUMMARY</div>
+      <div class="cv-entry">
+        <div class="cv-role" style="font-size:9px">EREN BAKİ</div>
+        <div class="cv-place">Management Information Systems</div>
+        <div class="cv-date" style="margin-top:4px">📍 İzmir, Türkiye &nbsp;|&nbsp; 05520941297 &nbsp;|&nbsp; ernbka.0@gmail.com</div>
+        <div class="cv-date">🔗 www.linkedin.com/in/erennbaki</div>
+      </div>
+      <div class="cv-text">
+        I am a second-year Management Information Systems student at Tarsus University, focusing on Human Resources,
+        Finance, Cloud Computing, and Frontend Development. I actively develop TEKNOFEST projects in the fields of Health
+        AI, Defense Systems, and 5G Technologies. As the Vice President of the MIS Society and a member of the HSD Tarsus
+        Sponsorship Committee, I have developed strong leadership and communication skills. I aim to build my career in the
+        defense, finance, and R&D sectors, contributing to technology-oriented projects by integrating cloud computing and
+        frontend solutions with modern HR expertise.
+      </div>
+    `
+  },
+  {
+    name:'ZONE 2', sub:'PROFESSIONAL EXPERIENCE',
+    render:()=>`
+      <div class="zone-header">▸ PROFESSIONAL EXPERIENCE</div>
+      <div class="cv-entry">
+        <div class="cv-role">Project Management Intern</div>
+        <div class="cv-place">Sca Social</div>
+        <div class="cv-date">01.2026 - 02.2026 &nbsp;|&nbsp; Remote</div>
+        <div class="cv-desc">Conducted KVKK-compliant IT law case analyses and prepared legal petitions related to personal data processing.</div>
+        <div class="cv-desc">Proposed AI- and data analytics-driven solutions to improve sales performance, customer satisfaction, and process efficiency.</div>
+      </div>
+      <div class="cv-entry">
+        <div class="cv-role">Intern</div>
+        <div class="cv-place">QNB Türkiye</div>
+        <div class="cv-date">02.2026 - 03.2026 &nbsp;|&nbsp; Remote</div>
+        <div class="cv-desc">While analyzing financial processes with a focus on retail, SME, and commercial banking, I have mastered the transformations of artificial intelligence and data analytics within the industry.</div>
+        <div class="cv-desc">I have acquired a strategic and solution-oriented perspective by focusing on Agile methodologies, advanced Excel, and sustainability strategies.</div>
+      </div>
+      <div class="cv-entry">
+        <div class="cv-role">Financial Affairs Assistant</div>
+        <div class="cv-place">Financial Consulting Office</div>
+        <div class="cv-date">07.2021 - 08.2022 &nbsp;|&nbsp; İzmir, Türkiye</div>
+        <div class="cv-desc">Managed financial operations and client communications while developing analytical solutions for financial planning processes.</div>
+        <div class="cv-desc">Enhanced operational efficiency by supporting financial planning and reporting, while strengthening professional decision-making skills.</div>
+      </div>
+      <div class="cv-entry">
+        <div class="cv-role">Intern</div>
+        <div class="cv-place">Arch Of Sigma</div>
+        <div class="cv-date">01.2026 - 02.2026 &nbsp;|&nbsp; Remote</div>
+        <div class="cv-desc">Gained knowledge of banking processes and the use of AI, data analytics, and Agile methodologies.</div>
+        <div class="cv-desc">Developed analytical skills and customer-centric perspectives through design thinking, Excel, and sustainability practices.</div>
+      </div>
+    `
+  },
+  {
+    name:'ZONE 3', sub:'EDUCATION',
+    render:()=>`
+      <div class="zone-header">▸ EDUCATION</div>
+      <div class="cv-entry">
+        <div class="cv-role">Management Information System (English)</div>
+        <div class="cv-place">Tarsus University &nbsp;|&nbsp; Major</div>
+        <div class="cv-date">10.2023 - 10.2028 &nbsp;|&nbsp; Mersin, Türkiye</div>
+      </div>
+      <div style="margin-top:14px">
+        <div style="font-size:5px;color:#444;margin-bottom:8px;letter-spacing:1px">LANGUAGES</div>
+        <div class="sbar-row"><span class="sbar-lbl">TURKISH – Native</span><div class="sbar"><div class="sbar-fill" style="width:100%"></div></div></div>
+        <div class="sbar-row"><span class="sbar-lbl">ENGLISH – B2 Upper Intermediate</span><div class="sbar"><div class="sbar-fill" style="width:75%"></div></div></div>
+      </div>
+    `
+  },
+  {
+    name:'ZONE 4', sub:'VOLUNTEER EXPERIENCE',
+    render:()=>`
+      <div class="zone-header">▸ VOLUNTEER EXPERIENCE</div>
+      <div class="cv-entry">
+        <div class="cv-role">Sponsorship Committee Member | HSD Tarsus</div>
+        <div class="cv-desc">Cultivated corporate relations and managed strategic resource development.</div>
+      </div>
+      <div class="cv-entry">
+        <div class="cv-role">Campus Leader | 100s Club</div>
+        <div class="cv-desc">Managed campus networking and spearheaded high-impact engagement initiatives.</div>
+      </div>
+      <div class="cv-entry">
+        <div class="cv-role">Founding Vice President | Management Information Systems Society</div>
+        <div class="cv-desc">Orchestrated the organizational foundation and led strategic community development.</div>
+      </div>
+      <div class="cv-entry">
+        <div class="cv-role">Rapporteur &amp; Presenter | Tarsus University Conferences</div>
+        <div class="cv-desc">Executed public speaking and managed professional event coordination.</div>
+      </div>
+    `
+  },
+  {
+    name:'ZONE 5', sub:'SKILLS',
+    render:()=>`
+      <div class="zone-header">▸ SKILLS</div>
+      <div class="cv-text" style="line-height:2.4">
+        <div class="cv-item">– MS Office (Excel, PowerPoint, Word)</div>
+        <div class="cv-item">– Leadership</div>
+        <div class="cv-item">– Strategic Communication</div>
+        <div class="cv-item">– Research and Development</div>
+        <div class="cv-item">– Non-Profit Organizations</div>
+        <div class="cv-item">– Microsoft Excel</div>
+        <div class="cv-item">– Python</div>
+        <div class="cv-item">– Cloud Computing</div>
+        <div class="cv-item">– Management Information Systems (MIS)</div>
+        <div class="cv-item">– Data Analytics</div>
+        <div class="cv-item">– Artificial Intelligence (AI)</div>
+        <div class="cv-item">– Frontend Development</div>
+        <div class="cv-item">– SQL &amp; Database Management</div>
+        <div class="cv-item">– Financial Technologies</div>
+        <div class="cv-item">– Human Resources</div>
+        <div class="cv-item">– Project Management</div>
+      </div>
+    `
+  },
+  {
+    name:'ZONE 6', sub:'CERTIFICATES',
+    render:()=>`
+      <div class="zone-header">▸ CERTIFICATES</div>
+      <div class="cv-text" style="line-height:2.2">
+        <div class="cv-item">– Data &amp; AI, IT, Digital Banking and Marketing – Türkiye İş Bankası &amp; Toptalent</div>
+        <div class="cv-item">– Prompt Engineering and Design Thinking – Sabancı Youth Mobilization</div>
+        <div class="cv-item">– Sustainability and Equality Schools – Borusan &amp; Toptalent</div>
+        <div class="cv-item">– Introduction to Cybersecurity – Cisco Networking Academy &amp; Akbank</div>
+        <div class="cv-item">– AI in Job Interviews and Problem Solving Techniques – Professional Skills Training</div>
+        <div class="cv-item">– Çukurova Communication and Youth Camp – Certificate of Attendance</div>
+        <div class="cv-item">– Excel 365 – QNB Türkiye</div>
+        <div class="cv-item">– Leadership School – BAT Türkiye</div>
+        <div class="cv-item">– Digital Marketing and 100sLeaders Programme – 100s Club</div>
+        <div class="cv-item">– Social Entrepreneurship, Career Planning and ICT – Credsverse</div>
+        <div class="cv-item">– Cloud &amp; DevOps Day – Coderspace</div>
+        <div class="cv-item">– AI Stars Project: Training of Trainers – AI Stars</div>
+        <div class="cv-item">– Nestlé Youth Academy – Nestlé</div>
+        <div class="cv-item">– Occupational Health and Safety (OHS) – YTNK TV</div>
+      </div>
+    `
+  },
+  {
+    name:'ZONE 7', sub:'PROJECTS',
+    render:()=>`
+      <div class="zone-header">▸ PROJECTS</div>
+      <div class="cv-entry">
+        <div class="cv-role">TEKNOFEST — AI in Healthcare</div>
+        <div class="cv-desc">Developing and optimizing deep learning models for early medical diagnosis and automated clinical data analysis.</div>
+      </div>
+      <div class="cv-entry">
+        <div class="cv-role">TEKNOFEST — Steel Dome Defense Systems</div>
+        <div class="cv-desc">Contributing to the design of AI-driven decision support systems and multi-layered data integration for defense network architectures.</div>
+      </div>
+      <div class="cv-entry">
+        <div class="cv-role">TEKNOFEST — 5G Technologies &amp; Connectivity</div>
+        <div class="cv-desc">Researching and implementing low-latency communication protocols and smart network management solutions within 5G infrastructures.</div>
+      </div>
+    `
+  },
+  {
+    name:'ZONE 8', sub:'REFERENCES',
+    render:()=>`
+      <div class="zone-header">▸ REFERENCES</div>
+      <div class="cv-entry">
+        <div class="cv-role">Gökçen Tarım Demirel</div>
+        <div class="cv-place">STM — Senior Industrial Cooperation and Incentive Specialist</div>
+        <div class="cv-date" style="margin-top:6px">✉️ gokcentarim3@gmail.com</div>
+        <div class="cv-date">📞 0507 397 20 68</div>
+      </div>
+    `
+  }
+];
+
+// ============================================================
+// STATE
+// ============================================================
+let zone = 0;
+let busy = false;
+let playerX = 0;
+const SPEED = 4.5;
+const SW = window.innerWidth;
+const SH = window.innerHeight;
+
+// DOM
+const gameEl   = document.getElementById('game');
+const titleEl  = document.getElementById('title');
+const thanksEl = document.getElementById('thanks');
+const panelEl  = document.getElementById('cv-panel');
+const playerEl = document.getElementById('player');
+const flashEl  = document.getElementById('flash');
+const hzname   = document.getElementById('hzname');
+const hzsub    = document.getElementById('hzsub');
+
+// ============================================================
+// STARS
+// ============================================================
+function buildStars() {
+  const sky = document.getElementById('sky');
+  for (let i = 0; i < 120; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const sz = Math.random() < 0.05 ? 3 : Math.random() < 0.2 ? 2 : 1;
+    s.style.cssText = `width:${sz}px;height:${sz}px;top:${Math.random()*72}%;left:${Math.random()*100}%;animation-delay:${Math.random()*4}s;animation-duration:${2+Math.random()*4}s`;
+    sky.appendChild(s);
+  }
+}
+
+// ============================================================
+// PIXEL CITY — drawn on canvas, clean dark palette
+// ============================================================
+function buildCity() {
+  // BACK layer
+  const bc = document.getElementById('city-back-canvas');
+  bc.width = SW; bc.height = 120;
+  bc.style.cssText = `position:absolute;bottom:80px;left:0;z-index:2;image-rendering:pixelated;`;
+  document.getElementById('game').appendChild(bc);
+  const bctx = bc.getContext('2d');
+  bctx.imageSmoothingEnabled = false;
+
+  // back buildings — very dark, minimal
+  const backBlds = [];
+  let bx = 0;
+  while (bx < SW * 1.5) {
+    const w = 30 + Math.random() * 50 | 0;
+    const h = 40 + Math.random() * 80 | 0;
+    backBlds.push({x: bx, w, h});
+    bx += w + (2 + Math.random() * 4 | 0);
+  }
+  backBlds.forEach(b => {
+    bctx.fillStyle = '#0d0d12';
+    bctx.fillRect(b.x, 120 - b.h, b.w, b.h);
+    bctx.fillStyle = '#111116';
+    bctx.fillRect(b.x, 120 - b.h, b.w, 2);
+    // few dim windows
+    for (let wy = 120 - b.h + 8; wy < 115; wy += 12) {
+      for (let wx = b.x + 5; wx < b.x + b.w - 5; wx += 10) {
+        if (Math.random() < 0.25) {
+          const c = Math.random() < 0.5 ? '#1a1a2a' : '#1a2010';
+          bctx.fillStyle = c;
+          bctx.fillRect(wx, wy, 5, 4);
+        }
+      }
+    }
+  });
+
+  // FRONT layer
+  const fc = document.getElementById('city-front-canvas');
+  fc.width = SW; fc.height = 90;
+  fc.style.cssText = `position:absolute;bottom:80px;left:0;z-index:4;image-rendering:pixelated;`;
+  document.getElementById('game').appendChild(fc);
+  const fctx = fc.getContext('2d');
+  fctx.imageSmoothingEnabled = false;
+
+  let fx = 0;
+  while (fx < SW) {
+    const w = 25 + Math.random() * 45 | 0;
+    const h = 30 + Math.random() * 60 | 0;
+    fctx.fillStyle = '#111118';
+    fctx.fillRect(fx, 90 - h, w, h);
+    fctx.fillStyle = '#1a1a22';
+    fctx.fillRect(fx, 90 - h, w, 2);
+    // antenna
+    if (Math.random() < 0.3) {
+      fctx.fillStyle = '#222228';
+      fctx.fillRect(fx + (w/2|0) - 1, 90 - h - 10, 2, 10);
+    }
+    // windows — some lit
+    for (let wy = 90 - h + 8; wy < 85; wy += 10) {
+      for (let wx = fx + 4; wx < fx + w - 4; wx += 9) {
+        if (Math.random() < 0.35) {
+          const r = Math.random();
+          const col = r < 0.4 ? '#2a2a10' : r < 0.6 ? '#102010' : '#0a0a1a';
+          fctx.fillStyle = col;
+          fctx.fillRect(wx, wy, 5, 4);
+        }
+      }
+    }
+    fx += w + (1 + Math.random() * 3 | 0);
+  }
+}
+
+// ============================================================
+// PIXEL PLAYER — Eren: esmer, siyah ceket, kısa saç, sakal
+// ============================================================
+const PSC = 3; // scale
+const PW = 16, PH = 28;
+
+function drawEren(flip, leg) {
+  const c = document.createElement('canvas');
+  c.width = PW * PSC; c.height = PH * PSC;
+  const ctx = c.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  if (flip) { ctx.save(); ctx.translate(c.width, 0); ctx.scale(-1, 1); }
+
+  const p = (x, y, col) => {
+    ctx.fillStyle = col;
+    ctx.fillRect(x * PSC, y * PSC, PSC, PSC);
+  };
+
+  const HAIR  = '#1a0e00';
+  const SKIN  = '#c09060';
+  const SKIN2 = '#a07848';
+  const BEARD = '#251200';
+  const EYE   = '#1a0800';
+  const JACK  = '#0e0e0e';
+  const JACK2 = '#181818';
+  const PANT  = '#14141e';
+  const SHOE  = '#080808';
+  const CORD  = '#cccccc';
+  const CARD  = '#e8e8e8';
+
+  // hair
+  for (let x = 4; x <= 11; x++) p(x, 0, HAIR);
+  for (let x = 3; x <= 12; x++) p(x, 1, HAIR);
+  p(3, 2, HAIR); p(12, 2, HAIR);
+
+  // face
+  for (let x = 3; x <= 12; x++) for (let y = 2; y <= 8; y++) p(x, y, SKIN);
+  p(3, 2, SKIN2); p(12, 2, SKIN2);
+
+  // eyebrows
+  p(5, 3, HAIR); p(6, 3, HAIR);
+  p(9, 3, HAIR); p(10, 3, HAIR);
+
+  // eyes
+  p(5, 4, EYE); p(6, 4, EYE);
+  p(9, 4, EYE); p(10, 4, EYE);
+
+  // nose
+  p(7, 6, SKIN2); p(8, 6, SKIN2);
+
+  // mouth / beard
+  p(5, 7, BEARD); p(6, 7, BEARD); p(7, 7, BEARD);
+  p(8, 7, BEARD); p(9, 7, BEARD); p(10, 7, BEARD);
+  p(4, 8, BEARD); p(11, 8, BEARD);
+  // smile
+  p(6, 7, SKIN); p(9, 7, SKIN);
+
+  // neck
+  p(6, 9, SKIN); p(7, 9, SKIN); p(8, 9, SKIN); p(9, 9, SKIN);
+
+  // jacket body
+  for (let x = 3; x <= 12; x++) for (let y = 10; y <= 18; y++) p(x, y, JACK);
+  // jacket highlight
+  for (let y = 10; y <= 18; y++) { p(3, y, JACK2); p(12, y, JACK2); }
+  // lapel
+  p(6, 10, SKIN); p(7, 10, SKIN);
+  p(8, 10, SKIN); p(9, 10, SKIN);
+  p(6, 11, SKIN2); p(9, 11, SKIN2);
+
+  // lanyard + card
+  p(7, 12, CORD); p(8, 12, CORD);
+  p(7, 13, CORD); p(8, 13, CORD);
+  for (let x = 6; x <= 9; x++) for (let y = 14; y <= 17; y++) p(x, y, CARD);
+  p(7, 15, '#aaa'); p(8, 15, '#aaa');
+
+  // arms
+  for (let y = 10; y <= 17; y++) { p(1, y, JACK); p(2, y, JACK); p(13, y, JACK); p(14, y, JACK); }
+  p(1, 18, SKIN); p(2, 18, SKIN); p(13, 18, SKIN); p(14, 18, SKIN);
+
+  // hands (slightly clasped)
+  p(2, 19, SKIN); p(3, 19, SKIN);
+  p(12, 19, SKIN); p(13, 19, SKIN);
+  p(5, 19, SKIN); p(6, 19, SKIN); p(7, 19, SKIN);
+  p(8, 19, SKIN); p(9, 19, SKIN); p(10, 19, SKIN);
+
+  // legs
+  if (leg === 0) {
+    for (let y = 19; y <= 24; y++) { for (let x = 4; x <= 7; x++) p(x, y, PANT); for (let x = 8; x <= 11; x++) p(x, y, PANT); }
+    for (let x = 3; x <= 8; x++) p(x, 25, SHOE);
+    p(3, 26, SHOE); p(4, 26, SHOE);
+    for (let x = 8; x <= 13; x++) p(x, 25, SHOE);
+    p(11, 26, SHOE); p(12, 26, SHOE);
+  } else if (leg === 1) {
+    for (let y = 19; y <= 25; y++) { for (let x = 4; x <= 7; x++) p(x, y, PANT); }
+    for (let y = 19; y <= 23; y++) { for (let x = 8; x <= 11; x++) p(x, y, PANT); }
+    for (let x = 3; x <= 8; x++) p(x, 26, SHOE);
+    p(3, 27, SHOE);
+    for (let x = 8; x <= 13; x++) p(x, 24, SHOE);
+    p(11, 25, SHOE);
+  } else {
+    for (let y = 19; y <= 23; y++) { for (let x = 4; x <= 7; x++) p(x, y, PANT); }
+    for (let y = 19; y <= 25; y++) { for (let x = 8; x <= 11; x++) p(x, y, PANT); }
+    for (let x = 3; x <= 8; x++) p(x, 24, SHOE);
+    p(3, 25, SHOE);
+    for (let x = 8; x <= 13; x++) p(x, 26, SHOE);
+    p(11, 27, SHOE);
+  }
+
+  if (flip) ctx.restore();
+  return c.toDataURL();
+}
+
+let legPhase = 0;
+function renderPlayer(flip) {
+  playerEl.style.backgroundImage = `url(${drawEren(flip, legPhase)})`;
+  playerEl.style.backgroundSize = '100% 100%';
+  playerEl.style.width  = (PW * PSC) + 'px';
+  playerEl.style.height = (PH * PSC) + 'px';
+}
+
+// ============================================================
+// ZONE DOTS
+// ============================================================
+function buildDots() {
+  const el = document.getElementById('zdots');
+  ZONES.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'zd'; d.id = 'zd' + i;
+    el.appendChild(d);
+  });
+}
+function updateDots() {
+  ZONES.forEach((_, i) => {
+    const d = document.getElementById('zd' + i);
+    if (!d) return;
+    d.className = 'zd' + (i === zone ? ' active' : i < zone ? ' done' : '');
+  });
+}
+
+// ============================================================
+// PANEL
+// ============================================================
+const scrollHint = document.getElementById('scroll-hint');
+
+function checkScroll() {
+  const canScroll = panelEl.scrollHeight > panelEl.clientHeight;
+  if (canScroll) {
+    scrollHint.classList.add('visible');
+    // scroll hint'i panel seviyesine hizala
+    scrollHint.style.top = (panelEl.clientHeight / 2) + 'px';
+  } else {
+    scrollHint.classList.remove('visible');
+  }
+}
+
+function showPanel() {
+  panelEl.innerHTML = ZONES[zone].render();
+  panelEl.scrollTop = 0;
+  panelEl.classList.add('visible');
+  hzname.textContent = ZONES[zone].name;
+  hzsub.textContent  = ZONES[zone].sub;
+  // scroll kontrolü için kısa gecikme
+  setTimeout(checkScroll, 420);
+}
+
+function hidePanel() {
+  panelEl.classList.remove('visible');
+  scrollHint.classList.remove('visible');
+}
+
+// scroll edince hint'i gizle/göster
+panelEl.addEventListener('scroll', () => {
+  const atBottom = panelEl.scrollTop + panelEl.clientHeight >= panelEl.scrollHeight - 10;
+  const atTop    = panelEl.scrollTop <= 10;
+  if (atBottom && atTop) {
+    scrollHint.classList.remove('visible');
+  } else {
+    scrollHint.classList.add('visible');
+  }
+});
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function nav(dir) {
+  if (busy) return;
+
+  const next = zone + dir;
+
+  // Son zone'dan ileri → el sallat, sonra thank you
+  if (next >= ZONES.length) {
+    busy = true;
+    hidePanel();
+    waveAndExit(() => {
+      flashEl.classList.add('dark');
+      setTimeout(() => {
+        thanksEl.classList.add('show');
+        flashEl.classList.remove('dark');
+        busy = false;
+      }, 300);
+    });
+    return;
+  }
+
+  if (next < 0) return;
+
+  busy = true;
+  hidePanel();
+
+  walkOff(dir, () => {
+    zone = next;
+    updateDots();
+
+    playerX = dir > 0 ? -PW * PSC - 10 : SW + 10;
+    playerEl.style.left = playerX + 'px';
+
+    flashEl.classList.add('dark');
+    setTimeout(() => {
+      flashEl.classList.remove('dark');
+      showPanel();
+      walkIn(dir, () => { busy = false; });
+    }, 280);
+  });
+}
+
+// ============================================================
+// WAVE — el sallama animasyonu
+// ============================================================
+function waveAndExit(cb) {
+  // Önce orta noktaya yürü
+  const midX = SW * 0.45;
+  const startX = playerX;
+  const dir = midX > startX ? 1 : -1;
+
+  // Orta noktaya yürü
+  const walkMid = setInterval(() => {
+    legPhase = (legPhase + 1) % 3;
+    playerX += SPEED * dir;
+    playerEl.style.left = playerX + 'px';
+    renderPlayer(false);
+    if (dir > 0 ? playerX >= midX : playerX <= midX) {
+      clearInterval(walkMid);
+      legPhase = 0;
+
+      // El sallama: kolu yukarı kaldır (sprite değişimi ile simüle)
+      let waveCount = 0;
+      let waveUp = true;
+      const waveIv = setInterval(() => {
+        renderWave(waveUp);
+        waveUp = !waveUp;
+        waveCount++;
+        if (waveCount >= 6) {
+          clearInterval(waveIv);
+          // Sağa doğru yürüyüp çık
+          walkOff(1, cb);
+        }
+      }, 220);
+    }
+  }, 16);
+}
+
+function renderWave(armUp) {
+  const c = document.createElement('canvas');
+  c.width = PW * PSC; c.height = PH * PSC;
+  const ctx = c.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+
+  const p = (x, y, col) => { ctx.fillStyle = col; ctx.fillRect(x * PSC, y * PSC, PSC, PSC); };
+
+  const HAIR='#1a0e00',SKIN='#c09060',SKIN2='#a07848',BEARD='#251200',
+        EYE='#1a0800',JACK='#0e0e0e',JACK2='#181818',PANT='#14141e',
+        SHOE='#080808',CORD='#cccccc',CARD='#e8e8e8';
+
+  // saç
+  for(let x=4;x<=11;x++) p(x,0,HAIR);
+  for(let x=3;x<=12;x++) p(x,1,HAIR);
+  p(3,2,HAIR); p(12,2,HAIR);
+  // yüz
+  for(let x=3;x<=12;x++) for(let y=2;y<=8;y++) p(x,y,SKIN);
+  p(3,2,SKIN2); p(12,2,SKIN2);
+  p(5,3,HAIR);p(6,3,HAIR);p(9,3,HAIR);p(10,3,HAIR);
+  p(5,4,EYE);p(6,4,EYE);p(9,4,EYE);p(10,4,EYE);
+  p(7,6,SKIN2);p(8,6,SKIN2);
+  // sakal + gülümseme
+  for(let x=5;x<=10;x++) p(x,7,BEARD);
+  p(4,8,BEARD);p(11,8,BEARD);
+  p(6,7,SKIN);p(9,7,SKIN);
+  // boyun
+  p(6,9,SKIN);p(7,9,SKIN);p(8,9,SKIN);p(9,9,SKIN);
+  // ceket
+  for(let x=3;x<=12;x++) for(let y=10;y<=18;y++) p(x,y,JACK);
+  for(let y=10;y<=18;y++){p(3,y,JACK2);p(12,y,JACK2);}
+  p(6,10,SKIN);p(7,10,SKIN);p(8,10,SKIN);p(9,10,SKIN);
+  p(6,11,SKIN2);p(9,11,SKIN2);
+  p(7,12,CORD);p(8,12,CORD);p(7,13,CORD);p(8,13,CORD);
+  for(let x=6;x<=9;x++) for(let y=14;y<=17;y++) p(x,y,CARD);
+  p(7,15,'#aaa');p(8,15,'#aaa');
+  // sol kol normal
+  for(let y=10;y<=17;y++){p(1,y,JACK);p(2,y,JACK);}
+  p(1,18,SKIN);p(2,18,SKIN);
+  // SAĞ KOL — yukarı ya da aşağı
+  if (armUp) {
+    // kol yukarı kaldırılmış
+    for(let y=4;y<=10;y++){p(13,y,JACK);p(14,y,JACK);}
+    p(13,3,SKIN);p(14,3,SKIN);p(15,3,SKIN); // el
+    p(15,4,SKIN);
+  } else {
+    // kol normal
+    for(let y=10;y<=17;y++){p(13,y,JACK);p(14,y,JACK);}
+    p(13,18,SKIN);p(14,18,SKIN);
+  }
+  // bacaklar (duruş)
+  for(let y=19;y<=24;y++){ for(let x=4;x<=7;x++) p(x,y,PANT); for(let x=8;x<=11;x++) p(x,y,PANT); }
+  for(let x=3;x<=8;x++) p(x,25,SHOE); p(3,26,SHOE); p(4,26,SHOE);
+  for(let x=8;x<=13;x++) p(x,25,SHOE); p(11,26,SHOE); p(12,26,SHOE);
+
+  playerEl.style.backgroundImage = `url(${c.toDataURL()})`;
+  playerEl.style.backgroundSize = '100% 100%';
+  playerEl.style.width  = (PW * PSC) + 'px';
+  playerEl.style.height = (PH * PSC) + 'px';
+}
+
+// ============================================================
+// RESTART
+// ============================================================
+function restartGame() {
+  thanksEl.classList.remove('show');
+  zone = 0;
+  busy = false;
+  playerX = SW * 0.18;
+  playerEl.style.left = playerX + 'px';
+  legPhase = 0;
+  renderPlayer(false);
+  updateDots();
+  showPanel();
+}
+
+function walkOff(dir, cb) {
+  const target = dir > 0 ? SW + PW * PSC + 10 : -PW * PSC - 10;
+  let lt = 0;
+  const iv = setInterval(() => {
+    lt++;
+    legPhase = lt % 3;
+    playerX += SPEED * dir;
+    playerEl.style.left = playerX + 'px';
+    renderPlayer(dir < 0);
+    if (dir > 0 ? playerX >= target : playerX <= target) {
+      clearInterval(iv);
+      cb();
+    }
+  }, 16);
+}
+
+function walkIn(dir, cb) {
+  const target = SW * 0.18;
+  let lt = 0;
+  const iv = setInterval(() => {
+    lt++;
+    legPhase = lt % 3;
+    playerX += SPEED * dir;
+    playerEl.style.left = playerX + 'px';
+    renderPlayer(dir < 0);
+    const done = dir > 0 ? playerX >= target : playerX <= SW - SW * 0.18;
+    if (done) {
+      clearInterval(iv);
+      legPhase = 0;
+      renderPlayer(false);
+      cb();
+    }
+  }, 16);
+}
+
+// ============================================================
+// KEYBOARD
+// ============================================================
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'd') nav(1);
+  if (e.key === 'ArrowLeft'  || e.key === 'a') nav(-1);
+});
+
+// ============================================================
+// TITLE LOGO — coin bump on tap
+// ============================================================
+const logoBox = document.getElementById('logoBox');
+logoBox.addEventListener('click', () => {
+  logoBox.classList.add('bump');
+  const coin = document.createElement('div');
+  coin.className = 'coin-pop';
+  document.getElementById('eb-logo').appendChild(coin);
+  setTimeout(() => { coin.remove(); }, 500);
+  setTimeout(() => logoBox.classList.remove('bump'), 300);
+});
+
+// ============================================================
+// START GAME
+// ============================================================
+function startGame() {
+  titleEl.classList.add('out');
+  setTimeout(() => {
+    titleEl.style.display = 'none';
+    gameEl.classList.add('show');
+    buildStars();
+    buildCity();
+    buildDots();
+    playerX = SW * 0.18;
+    playerEl.style.left = playerX + 'px';
+    playerEl.style.bottom = '80px';
+    renderPlayer(false);
+    showPanel();
+    updateDots();
+  }, 500);
+}
+
+document.getElementById('title').addEventListener('click', startGame);
+document.addEventListener('keydown', e => {
+  if (!gameEl.classList.contains('show')) startGame();
+});
+</script>
+</body>
+</html>
